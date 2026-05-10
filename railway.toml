@@ -1,5 +1,7 @@
 [build]
-builder = "railpack"
+builder = "nixpacks"
 
 [deploy]
-startCommand = "gunicorn socialmedia_backend.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "python manage.py migrate && gunicorn socialmedia_backend.wsgi:application --bind 0.0.0.0:$PORT"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
