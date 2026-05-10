@@ -1,4 +1,4 @@
 [deploy]
-startCommand = "python manage.py migrate && gunicorn socialmedia_backend.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = /app/.venv/bin/python manage.py migrate && /app/.venv/bin/gunicorn socialmedia_backend.wsgi:application --bind 0.0.0.0:$PORT
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
