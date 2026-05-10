@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialApp — Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;
+    }
+    .box {
+      background: #fff; border-radius: 20px; padding: 44px 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo h1 {
+      font-size: 30px; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg,#667eea,#764ba2);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .logo p { font-size: 14px; color: #888; margin-top: 4px; }
+    .tab-row {
+      display: flex; background: #f5f5f5; border-radius: 10px;
+      padding: 4px; margin-bottom: 24px; gap: 4px;
+    }
+    .tab-row button {
+      flex: 1; padding: 10px; border: none; background: none; border-radius: 8px;
+      font-size: 14px; font-weight: 500; cursor: pointer; color: #888;
+      transition: all .2s; font-family: inherit;
+    }
+    .tab-row button.active {
+      background: #fff; color: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    form { display: flex; flex-direction: column; gap: 13px; }
+    input {
+      padding: 13px 15px; border: 1.5px solid #e8e8e8; border-radius: 10px;
+      font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: #667eea; }
+    .btn {
+      padding: 13px; background: linear-gradient(135deg,#667eea,#764ba2);
+      color: white; border: none; border-radius: 10px; font-size: 15px;
+      font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .2s;
+    }
+    .btn:hover { opacity: .9; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .err {
+      background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;
+      padding: 11px 13px; font-size: 13px; color: #b91c1c; display: none; line-height: 1.5;
+    }
+    .ok {
+      background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
+      padding: 11px 13px; font-size: 13px; color: #15803d; display: none;
+    }
+    .forgot-link {
+      text-align: right; font-size: 13px; color: #667eea;
+      cursor: pointer; text-decoration: none; margin-top: -4px;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+    .divider { text-align: center; font-size: 12px; color: #aaa; margin: 4px 0; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">
+    <h1>SocialApp</h1>
+    <p>Share your world</p>
+  </div>
+
+  <div class="tab-row">
+    <button id="tab-login"  class="active" onclick="showTab('login')">Login</button>
+    <button id="tab-signup" onclick="showTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- ERROR / SUCCESS MESSAGES -->
+  <div class="err" id="err-msg"></div>
+  <div class="ok"  id="ok-msg"></div>
+
+  <!-- LOGIN FORM -->
+  <form id="login-form">
+    <input name="username" placeholder="Username" required autocomplete="username">
+    <input name="password" type="password" placeholder="Password" required autocomplete="current-password">
+    <a class="forgot-link" onclick="showTab('forgot')">Forgot password?</a>
+    <button type="submit" class="btn" id="login-btn">Login</button>
+  </form>
+
+  <!-- SIGNUP FORM -->
+  <form id="signup-form" style="display:none">
+    <input name="username" placeholder="Username" required autocomplete="username">
+    <input name="email" type="email" placeholder="Email (needed for password reset)" required>
+    <input name="password" type="password" placeholder="Password (min 6 characters)" required autocomplete="new-password">
+    <button type="submit" class="btn" id="signup-btn">Create Account</button>
+  </form>
+
+  <!-- FORGOT PASSWORD FORM -->
+  <form id="forgot-form" style="display:none">
+    <p style="font-size:14px;color:#555;margin-bottom:4px;line-height:1.6">
+      Enter your email address and we'll send you a link to reset your password.
+    </p>
+    <input name="email" type="email" placeholder="Your email address" required>
+    <button type="submit" class="btn" id="forgot-btn">Send Reset Link</button>
+    <div class="divider">or</div>
+    <button type="button" class="btn" style="background:#f5f5f5;color:#555"
+            onclick="showTab('login')">Back to Login</button>
+  </form>
+</div>
+
+<script type="module">
+import { login, register, forgotPassword } from '../js/api.js';
+
+// Redirect if already logged in
+if (localStorage.getItem('access_token')) {
+    window.location.href = 'feed.html';
+}
+
+// Show/hide forms
+window.showTab = (tab) => {
+    ['login','signup','forgot'].forEach(t => {
+        document.getElementById(t + '-form').style.display = 'none';
+    });
+    document.getElementById(tab + '-form').style.display = 'flex';
+    document.querySelectorAll('.tab-row button').forEach(b => b.classList.remove('active'));
+    const tabBtn = document.getElementById('tab-' + tab);
+    if (tabBtn) tabBtn.classList.add('active');
+    hideMessages();
+};
+
+function showErr(msg) {
+    const el = document.getElementById('err-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('ok-msg').style.display = 'none';
+}
+
+function showOk(msg) {
+    const el = document.getElementById('ok-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('err-msg').style.display = 'none';
+}
+
+function hideMessages() {
+    document.getElementById('err-msg').style.display = 'none';
+    document.getElementById('ok-msg').style.display  = 'none';
+}
+
+// LOGIN
+document.getElementById('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideMessages();
+    const btn = document.getElementById('login-btn');
+    btn.textContent = 'Logging in...';
+    btn.disabled = true;
+
+    const data = await login({
+        username: e.target.username.value.trim(),
+        password: e.target.password.value
+    });
+
+    if (!data) {
+        showErr('No response from server. Is the backend running?');
+    } else if (data.__network) {
+        showErr('Cannot connect to server. Make sure you ran: python manage.py runserver');
+    } else if (data.__error) {
+        showErr(data.error || data.detail || 'Login failed. Check your username and password.');
+    } else if (data.access) {
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.setItem('user_id', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        showOk('Login successful! Redirecting...');
+        setTimeout(() => window.location.href = 'feed.html', 800);
+    } else {
+        showErr('Unknown error. Open browser console (F12) for details.');
+    }
+
+    btn.textContent = 'Login';
+    btn.disabled = false;
+});
+
+// SIGNUP
+document.getElementById('signup-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideMessages();
+
+    const username = e.target.username.value.trim();
+    const email    = e.target.email.value.trim();
+    const password = e.target.password.value;
+
+    if (password.length < 6) {
+        showErr('Password must be at least 6 characters.');
+        return;
+    }
+    if (!email) {
+        showErr('Email is required. It is needed if you forget your password.');
+        return;
+    }
+
+    const btn = document.getElementById('signup-btn');
+    btn.textContent = 'Creating account...';
+    btn.disabled = true;
+
+    const data = await register({ username, email, password });
+
+    if (!data) {
+        showErr('No response from server. Is the backend running?');
+    } else if (data.__network) {
+        showErr('Cannot connect to server. Make sure: python manage.py runserver is running.');
+    } else if (data.__error) {
+        // Show field-specific errors from Django
+        if (data.username) showErr('Username: ' + data.username.join(' '));
+        else if (data.email) showErr('Email: ' + data.email.join(' '));
+        else if (data.password) showErr('Password: ' + data.password.join(' '));
+        else showErr(data.detail || data.error || JSON.stringify(data));
+    } else if (data.access) {
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.setItem('user_id', data.user.id);
+        localStorage.setItem('username', data.user.username);
+        showOk('Account created! Redirecting...');
+        setTimeout(() => window.location.href = 'feed.html', 800);
+    } else {
+        showErr('Unexpected response: ' + JSON.stringify(data));
+    }
+
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
+});
+
+// FORGOT PASSWORD
+document.getElementById('forgot-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    hideMessages();
+    const email = e.target.email.value.trim();
+    const btn = document.getElementById('forgot-btn');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    const data = await forgotPassword(email);
+
+    if (data?.__network) {
+        showErr('Cannot connect to server.');
+    } else if (data?.__error) {
+        showErr(data.error || data.detail || 'Something went wrong.');
+    } else {
+        showOk('✅ Reset link sent! Check your email inbox (and spam folder).');
+        e.target.reset();
+    }
+
+    btn.textContent = 'Send Reset Link';
+    btn.disabled = false;
+});
+</script>
+</body>
+</html>

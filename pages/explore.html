@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore — SocialApp</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #fafafa; color: #1a1a1a; }
+    .nav { background: #fff; border-bottom: 1px solid #efefef; height: 56px;
+           display: flex; align-items: center; padding: 0 24px; gap: 4px;
+           position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 22px; font-weight: 800; color: #667eea;
+                text-decoration: none; margin-right: 12px; }
+    .nav a { text-decoration: none; color: #444; font-size: 14px; font-weight: 500;
+             padding: 7px 11px; border-radius: 8px; transition: background .15s; }
+    .nav a:hover { background: #f5f5f5; }
+    .nav-logout { margin-left: auto; padding: 7px 14px; background: none;
+                  border: 1px solid #ddd; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .nav-logout:hover { background: #fee; border-color: #e74c3c; color: #e74c3c; }
+
+    .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px 40px; }
+
+    /* Search */
+    .search-bar { display: flex; gap: 10px; margin: 24px 0; }
+    .search-bar input { flex: 1; padding: 13px 16px; border: 1.5px solid #e8e8e8;
+                        border-radius: 10px; font-size: 14px; font-family: inherit;
+                        outline: none; background: #fff; transition: border-color .2s; }
+    .search-bar input:focus { border-color: #667eea; }
+    .search-bar button { padding: 13px 24px; background: #667eea; color: #fff;
+                         border: none; border-radius: 10px; font-size: 14px;
+                         font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* User results */
+    .user-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+                 background: #fff; border: 1px solid #efefef; border-radius: 12px;
+                 margin-bottom: 10px; transition: box-shadow .15s; }
+    .user-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.07); }
+    .u-av { width: 50px; height: 50px; border-radius: 50%; background: #667eea;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+    .u-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .u-info { flex: 1; min-width: 0; }
+    .u-info a { font-weight: 600; font-size: 15px; text-decoration: none;
+                color: #1a1a1a; display: block; }
+    .u-info a:hover { text-decoration: underline; }
+    .u-info p { font-size: 13px; color: #888; margin-top: 2px;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .follow-btn { padding: 8px 20px; border-radius: 8px; font-size: 13px;
+                  font-weight: 600; cursor: pointer; font-family: inherit;
+                  transition: all .15s; white-space: nowrap; }
+    .follow-btn.f { background: #667eea; border: none; color: #fff; }
+    .follow-btn.f:hover { background: #5568d0; }
+    .follow-btn.ing { background: none; border: 1.5px solid #ddd; color: #555; }
+
+    /* Section heading */
+    .sh { font-size: 14px; font-weight: 700; color: #333; margin: 20px 0 12px;
+          text-transform: uppercase; letter-spacing: .5px; }
+
+    /* Explore grid */
+    .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; }
+    .gi { aspect-ratio: 1; overflow: hidden; cursor: pointer; background: #f0f0f0;
+          border-radius: 2px; position: relative; }
+    .gi img { width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+    .gi:hover img { transform: scale(1.05); }
+    .gi .overlay { position: absolute; inset: 0; background: rgba(0,0,0,.3);
+                   display: flex; align-items: center; justify-content: center;
+                   opacity: 0; transition: opacity .2s; font-size: 14px;
+                   color: #fff; font-weight: 600; }
+    .gi:hover .overlay { opacity: 1; }
+    .gi.note { background: linear-gradient(135deg,#f5f3ff,#ede9fe); }
+    .gi.note div { width: 100%; height: 100%; display: flex; align-items: center;
+                   justify-content: center; padding: 10px; font-size: 13px;
+                   color: #555; text-align: center; }
+
+    #search-results { display: none; }
+    #search-results.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="feed.html">● SocialApp</a>
+  <a href="feed.html">🏠 Home</a>
+  <a href="explore.html">🔍 Explore</a>
+  <a href="reels.html">🎬 Reels</a>
+  <a href="upload.html">➕ Upload</a>
+  <a href="chat.html">💬 Messages</a>
+  <a href="notifications.html">🔔</a>
+  <a href="profile.html">👤 Profile</a>
+  <button class="nav-logout" onclick="doLogout()">Logout</button>
+</nav>
+<div class="wrap">
+  <div class="search-bar">
+    <input type="text" id="sinp" placeholder="Search people...">
+    <button onclick="doSearch()">Search</button>
+  </div>
+
+  <div id="search-results">
+    <div class="sh">People</div>
+    <div id="result-list"></div>
+  </div>
+
+  <div id="suggest-section">
+    <div class="sh">People you may know</div>
+    <div id="suggest-list">
+      <div style="color:#aaa;font-size:14px">Loading suggestions...</div>
+    </div>
+  </div>
+
+  <div class="sh" style="margin-top:28px">Recent Posts</div>
+  <div class="grid" id="explore-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#aaa">Loading posts...</div>
+  </div>
+</div>
+
+<script type="module">
+import { searchUsers, getExplore, getSuggestedUsers, followUser, unfollowUser } from '../js/api.js';
+
+if (!localStorage.getItem('access_token')) {
+  window.location.href = 'index.html';
+}
+
+function avHTML(user, size = 50) {
+  const l = (user?.username || 'U')[0].toUpperCase();
+  const url = user?.profile?.avatar_url;
+  if (url) {
+    return `<div class="u-av" style="padding:0;width:${size}px;height:${size}px">
+      <img src="${url}" onerror="this.outerHTML='${l}'">
+    </div>`;
+  }
+  return `<div class="u-av" style="width:${size}px;height:${size}px;font-size:${size*0.36}px">${l}</div>`;
+}
+
+function userCard(u, isFollowing) {
+  return `<div class="user-card">
+    ${avHTML(u)}
+    <div class="u-info">
+      <a href="profile.html?id=${u.id}">${u.username}</a>
+      <p>${u.profile?.bio || 'No bio yet'}</p>
+    </div>
+    <button class="follow-btn ${isFollowing ? 'ing' : 'f'}"
+            id="fb-${u.id}"
+            onclick="toggleFollow(${u.id}, this)">
+      ${isFollowing ? 'Following' : 'Follow'}
+    </button>
+  </div>`;
+}
+
+window.toggleFollow = async (id, btn) => {
+  if (btn.classList.contains('f')) {
+    await followUser(id);
+    btn.textContent = 'Following';
+    btn.classList.replace('f', 'ing');
+  } else {
+    await unfollowUser(id);
+    btn.textContent = 'Follow';
+    btn.classList.replace('ing', 'f');
+  }
+};
+
+window.doSearch = async () => {
+  const q = document.getElementById('sinp').value.trim();
+  if (!q) return;
+  const users = await searchUsers(q);
+  const section = document.getElementById('search-results');
+  const list    = document.getElementById('result-list');
+  section.classList.add('visible');
+  document.getElementById('suggest-section').style.display = 'none';
+  if (!users?.length) {
+    list.innerHTML = '<p style="font-size:14px;color:#888;padding:10px 0">No users found for "' + q + '"</p>';
+    return;
+  }
+  list.innerHTML = users.map(u => userCard(u, u.is_following)).join('');
+};
+
+document.getElementById('sinp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+document.getElementById('sinp').addEventListener('input', e => {
+  if (!e.target.value.trim()) {
+    document.getElementById('search-results').classList.remove('visible');
+    document.getElementById('suggest-section').style.display = 'block';
+  }
+});
+
+// Suggestions
+async function loadSuggestions() {
+  const users = await getSuggestedUsers();
+  const el = document.getElementById('suggest-list');
+  if (!users?.length) {
+    el.innerHTML = '<p style="font-size:14px;color:#888">No suggestions. You may already follow everyone!</p>';
+    return;
+  }
+  el.innerHTML = users.map(u => userCard(u, false)).join('');
+}
+
+// Explore grid
+async function loadGrid() {
+  const data = await getExplore();
+  const grid = document.getElementById('explore-grid');
+  const posts = data?.results || [];
+  if (!posts.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#aaa">No posts yet. <a href="upload.html" style="color:#667eea">Be the first!</a></div>';
+    return;
+  }
+  grid.innerHTML = posts.map(p => {
+    if (p.media_url && p.post_type === 'photo') {
+      return `<div class="gi">
+        <img src="${p.media_url}" loading="lazy" alt="">
+        <div class="overlay">❤️ ${p.likes_count}</div>
+      </div>`;
+    }
+    if (p.media_url && ['video','reel','long_video'].includes(p.post_type)) {
+      return `<div class="gi">
+        <img src="${p.media_url.replace(/\.[^.]+$/, '.jpg')}"
+             onerror="this.style.display='none'"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                    background:rgba(0,0,0,.2)">
+          <span style="font-size:30px">▶️</span>
+        </div>
+      </div>`;
+    }
+    return `<div class="gi note"><div>${p.caption || 'Note'}</div></div>`;
+  }).join('');
+}
+
+loadSuggestions();
+loadGrid();
+</script>
+</body>
+</html>

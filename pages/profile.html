@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — SocialApp</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #fafafa; color: #1a1a1a; }
+    .nav { background: #fff; border-bottom: 1px solid #efefef; height: 56px;
+           display: flex; align-items: center; padding: 0 24px; gap: 4px;
+           position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 22px; font-weight: 800; color: #667eea;
+                text-decoration: none; margin-right: 12px; }
+    .nav a { text-decoration: none; color: #444; font-size: 14px; font-weight: 500;
+             padding: 7px 11px; border-radius: 8px; transition: background .15s; }
+    .nav a:hover { background: #f5f5f5; }
+    .nav-logout { margin-left: auto; padding: 7px 14px; background: none;
+                  border: 1px solid #ddd; border-radius: 8px; font-size: 13px;
+                  cursor: pointer; }
+    .nav-logout:hover { background: #fee; border-color: #e74c3c; color: #e74c3c; }
+
+    .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 40px; }
+
+    /* Profile header */
+    .p-header { background: #fff; border: 1px solid #efefef; border-radius: 16px;
+                padding: 32px; margin: 24px 0 20px; display: flex;
+                align-items: center; gap: 40px; }
+    .p-av { width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 36px; font-weight: 700; flex-shrink: 0;
+            border: 3px solid #efefef; }
+    .p-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .p-info h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .p-stats { display: flex; gap: 28px; margin-bottom: 10px; }
+    .p-stats div { text-align: center; }
+    .p-stats strong { font-size: 17px; font-weight: 700; display: block; }
+    .p-stats span { font-size: 12px; color: #888; }
+    .p-bio { font-size: 14px; color: #555; line-height: 1.5; max-width: 400px; }
+    .p-btns { display: flex; gap: 10px; margin-top: 14px; }
+    .btn { padding: 8px 22px; border-radius: 8px; font-size: 14px;
+           font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .btn-primary { background: #667eea; color: #fff; border: none; }
+    .btn-primary:hover { background: #5568d0; }
+    .btn-outline { background: none; border: 1.5px solid #ddd; color: #333; }
+    .btn-outline:hover { background: #f5f5f5; }
+    .btn-danger { background: none; border: 1.5px solid #e74c3c; color: #e74c3c; }
+
+    /* Edit form */
+    .edit-box { background: #fff; border: 1px solid #efefef; border-radius: 14px;
+                padding: 24px; margin-bottom: 20px; display: none; }
+    .edit-box h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 500;
+                   color: #555; margin-bottom: 5px; }
+    .field input, .field textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #e8e8e8;
+      border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+    .field input:focus, .field textarea:focus { border-color: #667eea; }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    /* Post tabs */
+    .tabs { display: flex; gap: 0; border-bottom: 1.5px solid #efefef;
+            margin-bottom: 2px; }
+    .tab { padding: 12px 20px; font-size: 14px; font-weight: 500; color: #888;
+           cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent;
+           margin-bottom: -1.5px; transition: all .15s; font-family: inherit; }
+    .tab.active { color: #667eea; border-bottom-color: #667eea; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; margin-top: 3px; }
+    .grid-item { aspect-ratio: 1; overflow: hidden; cursor: pointer;
+                 background: #f0f0f0; border-radius: 2px; }
+    .grid-item img, .grid-item video { width: 100%; height: 100%;
+                                       object-fit: cover; transition: transform .2s; }
+    .grid-item:hover img, .grid-item:hover video { transform: scale(1.06); }
+    .grid-item .note-tile { width: 100%; height: 100%; background: linear-gradient(135deg,#f5f3ff,#ede9fe);
+                             display: flex; align-items: center; justify-content: center;
+                             padding: 10px; font-size: 13px; color: #555; text-align: center; }
+
+    .empty-grid { text-align: center; padding: 50px; color: #888;
+                  grid-column: 1/-1; }
+    .empty-grid div { font-size: 40px; margin-bottom: 10px; }
+    .empty-grid a { color: #667eea; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="feed.html">● SocialApp</a>
+  <a href="feed.html">🏠 Home</a>
+  <a href="explore.html">🔍 Explore</a>
+  <a href="reels.html">🎬 Reels</a>
+  <a href="upload.html">➕ Upload</a>
+  <a href="chat.html">💬 Messages</a>
+  <a href="notifications.html">🔔</a>
+  <a href="profile.html">👤 Profile</a>
+  <button class="nav-logout" onclick="doLogout()">Logout</button>
+</nav>
+
+<div class="wrap">
+  <div id="p-header" class="p-header">
+    <div style="text-align:center;color:#aaa;width:100%">Loading profile...</div>
+  </div>
+
+  <div class="edit-box" id="edit-box">
+    <h3>Edit Profile</h3>
+    <div class="field">
+      <label>Profile Photo</label>
+      <input type="file" id="av-input" accept="image/*">
+    </div>
+    <div class="field">
+      <label>Bio</label>
+      <textarea id="bio-inp" placeholder="Write something about yourself..."></textarea>
+    </div>
+    <div class="field">
+      <label>Website</label>
+      <input type="url" id="web-inp" placeholder="https://yourwebsite.com">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+      <button class="btn btn-outline" onclick="document.getElementById('edit-box').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('posts',this)">📷 Posts</button>
+    <button class="tab" onclick="switchTab('reels',this)">🎬 Reels</button>
+    <button class="tab" onclick="switchTab('videos',this)">🎥 Videos</button>
+  </div>
+
+  <div class="grid" id="posts-grid">
+    <div class="empty-grid"><div>📷</div><p>No posts yet</p></div>
+  </div>
+</div>
+
+<script type="module">
+import { getMe, getUserById, updateProfile, getUserPosts, followUser, unfollowUser } from '../js/api.js';
+
+if (!localStorage.getItem('access_token')) {
+  window.location.href = 'index.html';
+}
+
+const params  = new URLSearchParams(window.location.search);
+const targetId = params.get('id');
+const myId    = localStorage.getItem('user_id');
+const isOwn   = !targetId || String(targetId) === String(myId);
+let allPosts  = [];
+
+async function loadProfile() {
+  const user = isOwn ? await getMe() : await getUserById(targetId);
+  if (!user) return;
+
+  const p = user.profile || {};
+  const letter = (user.username||'U')[0].toUpperCase();
+  const avHtml = p.avatar_url
+    ? `<div class="p-av" style="padding:0"><img src="${p.avatar_url}" onerror="this.outerHTML='<div class=\\'p-av\\'>${letter}</div>'"></div>`
+    : `<div class="p-av">${letter}</div>`;
+
+  const postsData = await getUserPosts(user.id);
+  allPosts = postsData?.results || [];
+  const postCount = allPosts.length;
+
+  document.getElementById('p-header').innerHTML = `
+    ${avHtml}
+    <div class="p-info">
+      <h2>${user.username}</h2>
+      <div class="p-stats">
+        <div><strong>${postCount}</strong><span>Posts</span></div>
+        <div><strong>${p.followers_count || 0}</strong><span>Followers</span></div>
+        <div><strong>${p.following_count || 0}</strong><span>Following</span></div>
+      </div>
+      ${p.bio ? `<p class="p-bio">${p.bio}</p>` : ''}
+      ${p.website ? `<a href="${p.website}" target="_blank" style="font-size:13px;color:#667eea">${p.website}</a>` : ''}
+      <div class="p-btns">
+        ${isOwn
+          ? `<button class="btn btn-outline" onclick="document.getElementById('edit-box').style.display='block'">✏️ Edit Profile</button>
+             <button class="btn btn-outline" onclick="window.location.href='upload.html'">➕ New Post</button>`
+          : `<button class="btn btn-primary" id="follow-btn" onclick="toggleFollow(${user.id})">
+               ${user.is_following ? 'Following' : 'Follow'}
+             </button>`}
+      </div>
+    </div>`;
+
+  if (p.bio) {
+    document.getElementById('bio-inp').value = p.bio;
+  }
+  if (p.website) {
+    document.getElementById('web-inp').value = p.website;
+  }
+
+  renderGrid('posts');
+}
+
+function renderGrid(type) {
+  const grid = document.getElementById('posts-grid');
+  let filtered = allPosts;
+  if (type === 'reels')  filtered = allPosts.filter(p => p.post_type === 'reel');
+  if (type === 'videos') filtered = allPosts.filter(p => ['video','long_video'].includes(p.post_type));
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-grid">
+      <div>${type === 'reels' ? '🎬' : type === 'videos' ? '🎥' : '📷'}</div>
+      <p>No ${type} yet</p>
+      ${isOwn ? `<a href="upload.html">Upload now</a>` : ''}
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    if (p.post_type === 'photo' && p.media_url) {
+      return `<div class="grid-item"><img src="${p.media_url}" alt="" loading="lazy"></div>`;
+    }
+    if (['video','reel','long_video'].includes(p.post_type) && p.media_url) {
+      return `<div class="grid-item"><video src="${p.media_url}" preload="metadata" muted></video></div>`;
+    }
+    return `<div class="grid-item"><div class="note-tile">${p.caption || 'Note'}</div></div>`;
+  }).join('');
+}
+
+window.switchTab = (type, btn) => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid(type);
+};
+
+window.toggleFollow = async (id) => {
+  const btn = document.getElementById('follow-btn');
+  if (btn.textContent.trim() === 'Follow') {
+    await followUser(id);
+    btn.textContent = 'Following';
+    btn.classList.add('btn-outline');
+    btn.classList.remove('btn-primary');
+  } else {
+    await unfollowUser(id);
+    btn.textContent = 'Follow';
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-outline');
+  }
+};
+
+window.saveProfile = async () => {
+  const fd = new FormData();
+  fd.append('bio', document.getElementById('bio-inp').value);
+  fd.append('website', document.getElementById('web-inp').value);
+  const av = document.getElementById('av-input').files[0];
+  if (av) fd.append('avatar', av);
+  const res = await updateProfile(fd);
+  if (res) {
+    alert('Profile updated!');
+    document.getElementById('edit-box').style.display = 'none';
+    loadProfile();
+  }
+};
+
+loadProfile();
+</script>
+</body>
+</html>

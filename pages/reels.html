@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reels — SocialApp</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; font-family: -apple-system, sans-serif;
+           height: 100vh; overflow: hidden; }
+    .top-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+               display: flex; align-items: center; justify-content: space-between;
+               padding: 14px 20px; background: linear-gradient(to bottom,rgba(0,0,0,.7),transparent); }
+    .top-nav a { color: #fff; font-size: 20px; font-weight: 800; text-decoration: none; }
+    .top-nav span { color: #fff; font-size: 16px; font-weight: 600; }
+    .top-nav-back { color: #fff; font-size: 22px; text-decoration: none; }
+
+    .reel-wrap { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;
+                 scrollbar-width: none; }
+    .reel-wrap::-webkit-scrollbar { display: none; }
+
+    .reel { height: 100vh; scroll-snap-align: start; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            background: #111; overflow: hidden; }
+    .reel video { height: 100%; width: 100%; object-fit: cover; }
+
+    /* Gradient overlays */
+    .reel::before { content: ''; position: absolute; top: 0; left: 0; right: 0;
+                    height: 150px; background: linear-gradient(to bottom,rgba(0,0,0,.5),transparent);
+                    z-index: 2; pointer-events: none; }
+    .reel::after  { content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+                    height: 250px; background: linear-gradient(to top,rgba(0,0,0,.7),transparent);
+                    z-index: 2; pointer-events: none; }
+
+    /* Right actions */
+    .reel-actions { position: absolute; right: 14px; bottom: 100px; z-index: 10;
+                    display: flex; flex-direction: column; gap: 22px; align-items: center; }
+    .ract { display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; }
+    .ract button { background: none; border: none; color: #fff; font-size: 28px;
+                   cursor: pointer; filter: drop-shadow(0 1px 4px rgba(0,0,0,.5));
+                   transition: transform .15s; }
+    .ract button:active { transform: scale(1.3); }
+    .ract span { font-size: 12px; color: #fff; font-weight: 600;
+                 text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+
+    /* Author info */
+    .reel-info { position: absolute; bottom: 80px; left: 14px; z-index: 10;
+                 max-width: calc(100% - 90px); }
+    .reel-author { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .reel-av { width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid #fff;
+               object-fit: cover; background: #667eea; display: flex;
+               align-items: center; justify-content: center;
+               color: #fff; font-weight: 700; font-size: 16px; }
+    .reel-author a { color: #fff; font-weight: 700; font-size: 15px;
+                     text-decoration: none; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+    .follow-pill { padding: 4px 12px; background: none; border: 1.5px solid #fff;
+                   border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;
+                   cursor: pointer; }
+    .reel-caption { color: #fff; font-size: 14px; line-height: 1.5;
+                    text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+
+    /* Fake reel placeholder */
+    .fake-reel { width: 100%; height: 100%; display: flex; align-items: center;
+                 justify-content: center; font-size: 80px;
+                 background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); }
+
+    /* Comment drawer */
+    .cmt-drawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+                  background: #1a1a1a; border-radius: 20px 20px 0 0;
+                  padding: 20px 16px; max-height: 60vh; overflow-y: auto;
+                  transform: translateY(100%); transition: transform .3s; }
+    .cmt-drawer.open { transform: translateY(0); }
+    .cmt-drawer h4 { color: #fff; font-size: 15px; margin-bottom: 16px;
+                     display: flex; justify-content: space-between; }
+    .cmt-drawer h4 button { background: none; border: none; color: #aaa;
+                             font-size: 20px; cursor: pointer; }
+
+    .loading { color: #fff; text-align: center; padding: 60px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="feed.html">● SocialApp</a>
+  <a href="feed.html">🏠 Home</a>
+  <a href="explore.html">🔍 Explore</a>
+  <a href="reels.html">🎬 Reels</a>
+  <a href="upload.html">➕ Upload</a>
+  <a href="chat.html">💬 Messages</a>
+  <a href="notifications.html">🔔</a>
+  <a href="profile.html">👤 Profile</a>
+  <button class="nav-logout" onclick="doLogout()">Logout</button>
+</nav>
+
+<div class="top-nav">
+  <a href="feed.html">← </a>
+  <span>Reels</span>
+  <a href="upload.html" style="color:#fff;font-size:22px">+</a>
+</div>
+
+<div class="reel-wrap" id="reel-wrap">
+  <div class="loading">Loading reels...</div>
+</div>
+
+<div class="cmt-drawer" id="cmt-drawer">
+  <h4>Comments <button onclick="closeCmt()">✕</button></h4>
+  <div id="cmt-list"></div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+    <input id="cmt-inp" placeholder="Add a comment..."
+      style="flex:1;padding:10px 14px;background:#2a2a2a;border:none;border-radius:20px;
+             color:#fff;font-size:14px;font-family:inherit;outline:none">
+    <button id="cmt-send" style="padding:10px 18px;background:#667eea;color:#fff;border:none;
+                                  border-radius:20px;font-weight:600;cursor:pointer">Post</button>
+  </div>
+</div>
+
+<script type="module">
+import { getReels, likePost, getComments, addComment, followUser } from '../js/api.js';
+
+if (!localStorage.getItem('access_token')) {
+  window.location.href = 'index.html';
+}
+
+const wrap = document.getElementById('reel-wrap');
+let currentPost = null;
+
+// FAKE reels for demo when no reels uploaded yet
+const FAKE = [
+  { emoji: '🌄', color: 'linear-gradient(135deg,#667eea,#764ba2)' },
+  { emoji: '🎵', color: 'linear-gradient(135deg,#f093fb,#f5576c)' },
+  { emoji: '🏄', color: 'linear-gradient(135deg,#4facfe,#00f2fe)' },
+  { emoji: '🔥', color: 'linear-gradient(135deg,#fa709a,#fee140)' },
+  { emoji: '🌿', color: 'linear-gradient(135deg,#43e97b,#38f9d7)' },
+];
+
+function buildReel(reel, index) {
+  const letter = (reel.author?.username || 'U')[0].toUpperCase();
+  const avUrl  = reel.author?.profile?.avatar_url;
+  const avHtml = avUrl
+    ? `<img class="reel-av" src="${avUrl}" onerror="this.outerHTML='<div class=\\'reel-av\\'>${letter}</div>'">`
+    : `<div class="reel-av">${letter}</div>`;
+
+  const mediaHtml = reel.media_url
+    ? `<video src="${reel.media_url}" loop playsinline muted></video>`
+    : `<div class="fake-reel" style="background:${FAKE[index % FAKE.length].color}">
+         <span>${FAKE[index % FAKE.length].emoji}</span>
+       </div>`;
+
+  return `
+  <div class="reel" data-id="${reel.id}">
+    ${mediaHtml}
+    <div class="reel-actions">
+      <div class="ract">
+        <button id="rl-${reel.id}" onclick="doLike(${reel.id}, this)">
+          ${reel.is_liked ? '❤️' : '🤍'}
+        </button>
+        <span id="rc-${reel.id}">${reel.likes_count}</span>
+      </div>
+      <div class="ract">
+        <button onclick="openCmt(${reel.id})">💬</button>
+        <span>Comment</span>
+      </div>
+      <div class="ract">
+        <button onclick="navigator.share ? navigator.share({url:location.href}) : alert('Copy: '+location.href)">↗️</button>
+        <span>Share</span>
+      </div>
+    </div>
+    <div class="reel-info">
+      <div class="reel-author">
+        ${avHtml}
+        <a href="/frontend/pages/profile.html?id=${reel.author?.id}">@${reel.author?.username}</a>
+        <button class="follow-pill" onclick="doFollow(${reel.author?.id}, this)">Follow</button>
+      </div>
+      <div class="reel-caption">${reel.caption || ''}</div>
+    </div>
+  </div>`;
+}
+
+// Load reels
+async function load() {
+  const data = await getReels();
+  let reels = data?.results || [];
+
+  // If no reels yet, show fake demo reels
+  if (!reels.length) {
+    const me = localStorage.getItem('username') || 'User';
+    reels = FAKE.map((f, i) => ({
+      id: i + 1,
+      author: { id: 0, username: me, profile: {} },
+      media_url: null,
+      caption: ['Beautiful sunset 🌄', 'Good vibes only 🎵', 'Surf\'s up 🏄',
+                'Feeling the heat 🔥', 'Nature walk 🌿'][i],
+      is_liked: false,
+      likes_count: Math.floor(Math.random() * 500),
+    }));
+  }
+
+  wrap.innerHTML = reels.map((r, i) => buildReel(r, i)).join('');
+  setupObserver();
+}
+
+// Auto-play on scroll
+function setupObserver() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const v = e.target.querySelector('video');
+      if (!v) return;
+      if (e.isIntersecting) { v.muted = false; v.play(); }
+      else { v.pause(); v.currentTime = 0; v.muted = true; }
+    });
+  }, { threshold: 0.7 });
+  document.querySelectorAll('.reel').forEach(r => obs.observe(r));
+}
+
+window.doLike = async (id, btn) => {
+  const res = await likePost(id);
+  if (!res) return;
+  btn.textContent = res.liked ? '❤️' : '🤍';
+  document.getElementById(`rc-${id}`).textContent = res.count;
+};
+
+window.doFollow = async (id, btn) => {
+  if (!id) return;
+  await followUser(id);
+  btn.textContent = 'Following';
+  btn.style.background = 'rgba(255,255,255,0.2)';
+};
+
+window.openCmt = async (postId) => {
+  currentPost = postId;
+  const drawer = document.getElementById('cmt-drawer');
+  drawer.classList.add('open');
+  const list = document.getElementById('cmt-list');
+  list.innerHTML = '<p style="color:#aaa;font-size:13px">Loading...</p>';
+  const data = await getComments(postId);
+  const items = data?.results || [];
+  if (!items.length) {
+    list.innerHTML = '<p style="color:#aaa;font-size:13px">No comments yet</p>';
+  } else {
+    list.innerHTML = items.map(c => `
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-start">
+        <div style="width:32px;height:32px;border-radius:50%;background:#667eea;
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-weight:700;font-size:13px;flex-shrink:0">
+          ${(c.author?.username||'U')[0].toUpperCase()}
+        </div>
+        <div style="background:#2a2a2a;border-radius:12px;padding:8px 12px">
+          <b style="color:#fff;font-size:13px;margin-right:5px">${c.author?.username}</b>
+          <span style="color:#ccc;font-size:13px">${c.text}</span>
+        </div>
+      </div>`).join('');
+  }
+};
+
+window.closeCmt = () => {
+  document.getElementById('cmt-drawer').classList.remove('open');
+  currentPost = null;
+};
+
+document.getElementById('cmt-send').onclick = async () => {
+  if (!currentPost) return;
+  const inp = document.getElementById('cmt-inp');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  await addComment(currentPost, txt);
+  const me = localStorage.getItem('username') || 'You';
+  document.getElementById('cmt-list').innerHTML += `
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="width:32px;height:32px;border-radius:50%;background:#667eea;
+                  display:flex;align-items:center;justify-content:center;
+                  color:#fff;font-weight:700;font-size:13px;flex-shrink:0">
+        ${me[0].toUpperCase()}
+      </div>
+      <div style="background:#2a2a2a;border-radius:12px;padding:8px 12px">
+        <b style="color:#fff;font-size:13px;margin-right:5px">${me}</b>
+        <span style="color:#ccc;font-size:13px">${txt}</span>
+      </div>
+    </div>`;
+};
+
+// Close comment drawer on backdrop click
+document.addEventListener('click', e => {
+  const drawer = document.getElementById('cmt-drawer');
+  if (drawer.classList.contains('open') && !drawer.contains(e.target)) {
+    closeCmt();
+  }
+});
+
+load();
+</script>
+</body>
+</html>

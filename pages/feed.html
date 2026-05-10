@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed — SocialApp</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #fafafa; color: #1a1a1a; }
+
+    /* NAV */
+    .nav { background: #fff; border-bottom: 1px solid #efefef; height: 56px;
+           display: flex; align-items: center; padding: 0 24px; gap: 4px;
+           position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 22px; font-weight: 800; color: #667eea;
+                text-decoration: none; margin-right: 12px; letter-spacing: -1px; }
+    .nav a { text-decoration: none; color: #444; font-size: 14px; font-weight: 500;
+             padding: 7px 11px; border-radius: 8px; transition: background .15s; }
+    .nav a:hover { background: #f5f5f5; color: #111; }
+    .nav-logout { margin-left: auto; padding: 7px 14px; background: none;
+                  border: 1px solid #ddd; border-radius: 8px; font-size: 13px;
+                  cursor: pointer; transition: all .15s; }
+    .nav-logout:hover { background: #fee; border-color: #e74c3c; color: #e74c3c; }
+
+    /* STORIES */
+    .stories { background: #fff; border-bottom: 1px solid #efefef;
+               display: flex; gap: 14px; padding: 14px 20px;
+               overflow-x: auto; scrollbar-width: none; }
+    .stories::-webkit-scrollbar { display: none; }
+    .story { display: flex; flex-direction: column; align-items: center;
+             gap: 5px; cursor: pointer; flex-shrink: 0; transition: transform .15s; }
+    .story:hover { transform: scale(1.05); }
+    .story-ring { width: 62px; height: 62px; border-radius: 50%;
+                  background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+                  padding: 2.5px; }
+    .story-ring img { width: 100%; height: 100%; border-radius: 50%;
+                      object-fit: cover; border: 2.5px solid #fff; background: #ddd; }
+    .story span { font-size: 11px; color: #555; max-width: 66px;
+                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .add-story .story-ring { background: #667eea; display: flex; align-items: center;
+                              justify-content: center; font-size: 28px; color: #fff; }
+
+    /* LAYOUT */
+    .layout { display: flex; max-width: 960px; margin: 24px auto;
+              padding: 0 16px; gap: 28px; align-items: flex-start; }
+    .feed { flex: 1; max-width: 600px; display: flex;
+            flex-direction: column; gap: 20px; min-width: 0; }
+    .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 72px; }
+
+    /* POST CARD */
+    .card { background: #fff; border: 1px solid #efefef; border-radius: 14px;
+            overflow: hidden; }
+    .card-head { display: flex; align-items: center; gap: 11px; padding: 13px 15px; }
+    .av { width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+          background: #667eea; display: flex; align-items: center;
+          justify-content: center; color: #fff; font-weight: 700;
+          font-size: 15px; flex-shrink: 0; }
+    .av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .uname { font-weight: 600; font-size: 14px; text-decoration: none;
+             color: #1a1a1a; flex: 1; }
+    .uname:hover { text-decoration: underline; }
+    .tago { font-size: 12px; color: #aaa; }
+    .media { width: 100%; max-height: 560px; object-fit: cover;
+             display: block; background: #f0f0f0; }
+    .actions { display: flex; gap: 4px; padding: 10px 12px 6px; }
+    .act-btn { display: flex; align-items: center; gap: 5px; padding: 7px 11px;
+               background: none; border: none; border-radius: 8px; font-size: 14px;
+               cursor: pointer; color: #444; transition: background .15s; }
+    .act-btn:hover { background: #f5f5f5; }
+    .act-btn.liked { color: #e74c3c; }
+    .caption { padding: 4px 15px 12px; font-size: 14px; line-height: 1.5; color: #333; }
+    .caption b { font-weight: 600; margin-right: 5px; }
+
+    /* COMMENTS */
+    .comments { border-top: 1px solid #f5f5f5; padding: 12px 15px; display: none; }
+    .cmt { display: flex; gap: 9px; margin-bottom: 9px; align-items: flex-start; }
+    .cmt .av { width: 28px; height: 28px; font-size: 11px; }
+    .cmt-text { background: #f5f5f5; border-radius: 12px;
+                padding: 6px 11px; font-size: 13px; line-height: 1.5; }
+    .cmt-text b { font-weight: 600; margin-right: 4px; }
+    .cmt-row { display: flex; gap: 8px; margin-top: 10px; }
+    .cmt-row input { flex: 1; padding: 8px 12px; border: 1px solid #ddd;
+                     border-radius: 20px; font-size: 13px; font-family: inherit;
+                     outline: none; }
+    .cmt-row input:focus { border-color: #667eea; }
+    .cmt-row button { padding: 8px 16px; background: #667eea; color: #fff;
+                      border: none; border-radius: 20px; font-size: 13px;
+                      font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* SIDEBAR */
+    .s-card { background: #fff; border: 1px solid #efefef; border-radius: 14px;
+              padding: 18px; margin-bottom: 14px; }
+    .s-card h4 { font-size: 12px; font-weight: 700; color: #888;
+                 text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+    .s-user { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .s-user .av { width: 38px; height: 38px; font-size: 14px; }
+    .s-user .info { flex: 1; min-width: 0; }
+    .s-user .info a { font-weight: 600; font-size: 13px; text-decoration: none;
+                      color: #1a1a1a; display: block;
+                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .s-user .info span { font-size: 12px; color: #888; }
+    .follow-btn { padding: 5px 14px; background: #667eea; color: #fff;
+                  border: none; border-radius: 6px; font-size: 12px;
+                  font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .follow-btn.following { background: none; border: 1px solid #ddd; color: #555; }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 50px 20px; background: #fff;
+             border: 1px solid #efefef; border-radius: 14px; }
+    .empty div { font-size: 44px; margin-bottom: 14px; }
+    .empty h3 { font-size: 17px; font-weight: 600; margin-bottom: 7px; }
+    .empty p { font-size: 13px; color: #888; margin-bottom: 16px; }
+    .empty a { display: inline-block; padding: 10px 22px;
+               background: #667eea; color: #fff; text-decoration: none;
+               border-radius: 8px; font-weight: 600; font-size: 14px; }
+
+    .info-banner { background: #fff8f0; border: 1px solid #ffe0b2;
+                   border-radius: 10px; padding: 12px 15px; font-size: 13px;
+                   color: #e65100; margin-bottom: 4px; }
+    .info-banner a { color: #667eea; font-weight: 600; }
+
+    @media (max-width: 768px) { .sidebar { display: none; } }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="feed.html">● SocialApp</a>
+  <a href="feed.html">🏠 Home</a>
+  <a href="explore.html">🔍 Explore</a>
+  <a href="reels.html">🎬 Reels</a>
+  <a href="upload.html">➕ Upload</a>
+  <a href="chat.html">💬 Messages</a>
+  <a href="notifications.html">🔔</a>
+  <a href="profile.html">👤 Profile</a>
+  <button class="nav-logout" onclick="doLogout()">Logout</button>
+</nav>
+
+<div class="stories" id="stories">
+  <div class="story add-story" onclick="window.location.href='upload.html'">
+    <div class="story-ring" style="display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:26px;font-weight:300;color:#fff">+</span>
+    </div>
+    <span>Your story</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="feed" id="feed">
+    <div style="text-align:center;padding:30px;color:#888">Loading...</div>
+  </div>
+  <div class="sidebar">
+    <div class="s-card">
+      <h4>Suggested for you</h4>
+      <div id="suggested-users">
+        <div style="font-size:13px;color:#aaa">Loading suggestions...</div>
+      </div>
+    </div>
+    <div class="s-card">
+      <h4>Quick links</h4>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a href="upload.html" style="font-size:13px;color:#667eea;text-decoration:none;font-weight:500">➕ Create Post</a>
+        <a href="explore.html" style="font-size:13px;color:#667eea;text-decoration:none;font-weight:500">🔍 Find People</a>
+        <a href="reels.html" style="font-size:13px;color:#667eea;text-decoration:none;font-weight:500">🎬 Watch Reels</a>
+        <a href="profile.html" style="font-size:13px;color:#667eea;text-decoration:none;font-weight:500">👤 My Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  getFeed, getExplore, getStories, likePost,
+  getComments, addComment, followUser, getSuggestedUsers
+} from '../js/api.js';
+
+if (!localStorage.getItem('access_token')) {
+  window.location.href = 'index.html';
+}
+
+window.doLogout = () => { localStorage.clear(); window.location.href = 'index.html'; };
+
+// Avatar helper
+function avHTML(user, size = 38) {
+  const p = user?.profile;
+  const letter = (user?.username || 'U')[0].toUpperCase();
+  if (p?.avatar_url) {
+    return `<div class="av" style="width:${size}px;height:${size}px;padding:0">
+      <img src="${p.avatar_url}" onerror="this.parentNode.innerHTML='${letter}'">
+    </div>`;
+  }
+  return `<div class="av" style="width:${size}px;height:${size}px;font-size:${size*0.4}px">${letter}</div>`;
+}
+
+// Time ago
+function ago(d) {
+  const m = Math.floor((Date.now() - new Date(d)) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm';
+  if (m < 1440) return Math.floor(m/60) + 'h';
+  return Math.floor(m/1440) + 'd';
+}
+
+// Build card
+function buildCard(p) {
+  let media = '';
+  if (p.media_url) {
+    if (p.post_type === 'photo') {
+      media = `<img class="media" src="${p.media_url}" alt="" loading="lazy">`;
+    } else if (['video','reel','long_video'].includes(p.post_type)) {
+      media = `<video class="media" src="${p.media_url}" controls preload="metadata"></video>`;
+    } else if (p.post_type === 'audio') {
+      media = `<div style="padding:16px 15px;background:#f8f8f8">
+        <audio src="${p.media_url}" controls style="width:100%"></audio>
+      </div>`;
+    }
+  }
+  if (p.post_type === 'note' || !p.media_url) {
+    media = `<div style="padding:20px 15px;font-size:18px;color:#333;line-height:1.5;
+              background:linear-gradient(135deg,#f5f3ff,#ede9fe);min-height:100px;
+              display:flex;align-items:center">${p.caption}</div>`;
+  }
+
+  return `<div class="card" id="card-${p.id}">
+    <div class="card-head">
+      ${avHTML(p.author)}
+      <a class="uname" href="profile.html?id=${p.author?.id}">${p.author?.username}</a>
+      <span class="tago">${ago(p.created_at)}</span>
+    </div>
+    ${media}
+    <div class="actions">
+      <button class="act-btn ${p.is_liked?'liked':''}" id="lb-${p.id}" onclick="doLike(${p.id})">
+        ${p.is_liked?'❤️':'🤍'} <span id="lc-${p.id}">${p.likes_count}</span>
+      </button>
+      <button class="act-btn" onclick="toggleCmts(${p.id})">💬 Comment</button>
+    </div>
+    ${p.post_type !== 'note' ? `<div class="caption"><b>${p.author?.username}</b>${p.caption||''}</div>` : ''}
+    <div class="comments" id="cmts-${p.id}">
+      <div id="clist-${p.id}"></div>
+      <div class="cmt-row">
+        <input id="cinp-${p.id}" placeholder="Add a comment..." onkeydown="if(event.key==='Enter')doComment(${p.id})">
+        <button onclick="doComment(${p.id})">Post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Like
+window.doLike = async (id) => {
+  const res = await likePost(id);
+  if (!res) return;
+  const btn = document.getElementById(`lb-${id}`);
+  const cnt = document.getElementById(`lc-${id}`);
+  if (res.liked) {
+    btn.classList.add('liked');
+    btn.innerHTML = `❤️ <span id="lc-${id}">${res.count}</span>`;
+  } else {
+    btn.classList.remove('liked');
+    btn.innerHTML = `🤍 <span id="lc-${id}">${res.count}</span>`;
+  }
+};
+
+// Comments
+window.toggleCmts = async (id) => {
+  const box = document.getElementById(`cmts-${id}`);
+  const open = box.style.display === 'block';
+  box.style.display = open ? 'none' : 'block';
+  if (!open) {
+    const data = await getComments(id);
+    const list = document.getElementById(`clist-${id}`);
+    const items = data?.results || [];
+    if (!items.length) {
+      list.innerHTML = `<p style="font-size:12px;color:#aaa;margin-bottom:8px">No comments yet. Be the first!</p>`;
+    } else {
+      list.innerHTML = items.map(c => `
+        <div class="cmt">
+          ${avHTML(c.author, 28)}
+          <div class="cmt-text"><b>${c.author?.username}</b>${c.text}</div>
+        </div>`).join('');
+    }
+  }
+};
+
+window.doComment = async (id) => {
+  const inp = document.getElementById(`cinp-${id}`);
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  const me = localStorage.getItem('username') || 'You';
+  const list = document.getElementById(`clist-${id}`);
+  list.innerHTML += `<div class="cmt">
+    <div class="av" style="width:28px;height:28px;font-size:11px">${me[0].toUpperCase()}</div>
+    <div class="cmt-text"><b>${me}</b>${txt}</div>
+  </div>`;
+  await addComment(id, txt);
+};
+
+// Suggested users
+async function loadSuggested() {
+  const users = await getSuggestedUsers();
+  const el = document.getElementById('suggested-users');
+  if (!users?.length) {
+    el.innerHTML = `<p style="font-size:13px;color:#aaa">No suggestions yet. 
+      <a href="explore.html" style="color:#667eea">Browse all users</a></p>`;
+    return;
+  }
+  el.innerHTML = users.slice(0,5).map(u => `
+    <div class="s-user">
+      ${avHTML(u, 38)}
+      <div class="info">
+        <a href="profile.html?id=${u.id}">${u.username}</a>
+        <span>${u.profile?.bio || 'No bio'}</span>
+      </div>
+      <button class="follow-btn" id="sfb-${u.id}" onclick="doSFollow(${u.id}, this)">Follow</button>
+    </div>`).join('');
+}
+
+window.doSFollow = async (id, btn) => {
+  await followUser(id);
+  btn.textContent = 'Following';
+  btn.classList.add('following');
+};
+
+// Load stories
+async function loadStories() {
+  const data = await getStories();
+  const bar = document.getElementById('stories');
+  const items = data?.results || [];
+  if (!items.length) return;
+  items.forEach(s => {
+    const ring = document.createElement('div');
+    ring.className = 'story';
+    ring.innerHTML = `<div class="story-ring">
+      <img src="${s.author?.profile?.avatar_url || ''}"
+           onerror="this.parentNode.innerHTML='<div style=\\'width:100%;height:100%;background:#667eea;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700\\'>${(s.author?.username||'U')[0].toUpperCase()}</div>'"
+           alt="${s.author?.username}">
+    </div>
+    <span>${s.author?.username}</span>`;
+    bar.appendChild(ring);
+  });
+}
+
+// Load feed with infinite scroll
+let page = 1, loading = false, noMore = false;
+async function loadFeed() {
+  if (loading || noMore) return;
+  loading = true;
+  const feed = document.getElementById('feed');
+
+  let data = await getFeed(page);
+  let posts = data?.results || [];
+
+  if (posts.length === 0 && page === 1) {
+    // Show explore posts with banner
+    const ex = await getExplore(1);
+    posts = ex?.results || [];
+    if (posts.length > 0) {
+      feed.innerHTML = `<div class="info-banner">
+        💡 You're not following anyone yet. 
+        <a href="explore.html">Find people to follow</a> to personalise your feed.
+        Showing all recent posts for now.
+      </div>`;
+    } else {
+      feed.innerHTML = `<div class="empty">
+        <div>📸</div><h3>Nothing here yet</h3>
+        <p>Be the first to post something!</p>
+        <a href="upload.html">Create Post</a>
+      </div>`;
+      loading = false; return;
+    }
+    noMore = true;
+  }
+
+  posts.forEach(p => { feed.innerHTML += buildCard(p); });
+  if (data?.next) page++;
+  else noMore = true;
+  loading = false;
+}
+
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400)
+    loadFeed();
+});
+
+loadStories();
+loadFeed();
+loadSuggested();
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload — SocialApp</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #fafafa; color: #1a1a1a; }
+    .nav { background: #fff; border-bottom: 1px solid #efefef; height: 56px;
+           display: flex; align-items: center; padding: 0 24px; gap: 4px;
+           position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 22px; font-weight: 800; color: #667eea;
+                text-decoration: none; margin-right: 12px; }
+    .nav a { text-decoration: none; color: #444; font-size: 14px; font-weight: 500;
+             padding: 7px 11px; border-radius: 8px; transition: background .15s; }
+    .nav a:hover { background: #f5f5f5; }
+    .nav-logout { margin-left: auto; padding: 7px 14px; background: none;
+                  border: 1px solid #ddd; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .nav-logout:hover { background: #fee; border-color: #e74c3c; color: #e74c3c; }
+
+    .wrap { max-width: 560px; margin: 40px auto; padding: 0 20px; }
+    .wrap h2 { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+
+    .card { background: #fff; border: 1px solid #efefef; border-radius: 16px;
+            padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+
+    label.lbl { font-size: 13px; font-weight: 600; color: #555;
+                display: block; margin-bottom: 5px; }
+
+    select, textarea {
+        width: 100%; padding: 12px 14px; border: 1.5px solid #e8e8e8;
+        border-radius: 10px; font-size: 14px; font-family: inherit;
+        outline: none; background: #fafafa; transition: border-color .2s; }
+    select:focus, textarea:focus { border-color: #667eea; background: #fff; }
+    textarea { resize: vertical; min-height: 100px; }
+
+    .drop-zone { border: 2px dashed #d0d0d0; border-radius: 12px;
+                 padding: 40px 20px; text-align: center; cursor: pointer;
+                 transition: all .2s; background: #fafafa; }
+    .drop-zone:hover, .drop-zone.drag { border-color: #667eea; background: #f5f3ff; }
+    .drop-zone .icon { font-size: 44px; margin-bottom: 10px; }
+    .drop-zone p { color: #888; font-size: 14px; margin-bottom: 6px; }
+    .drop-zone span { font-size: 12px; color: #aaa; }
+    input[type="file"] { display: none; }
+
+    #preview { border-radius: 10px; overflow: hidden; background: #f0f0f0;
+               display: none; }
+    #preview img, #preview video, #preview audio {
+        max-width: 100%; display: block; }
+
+    .btn-post { padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white; border: none; border-radius: 10px; font-size: 15px;
+                font-weight: 700; cursor: pointer; font-family: inherit;
+                transition: opacity .2s; }
+    .btn-post:hover { opacity: .9; }
+    .btn-post:disabled { opacity: .6; cursor: not-allowed; }
+
+    .progress-bar { height: 6px; background: #e8e8e8; border-radius: 3px;
+                    overflow: hidden; display: none; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg,#667eea,#764ba2);
+                     width: 0; transition: width .3s; border-radius: 3px; }
+
+    .success-msg { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px;
+                   padding: 14px; text-align: center; color: #166534;
+                   font-weight: 600; font-size: 14px; display: none; }
+    .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px;
+                 padding: 14px; text-align: center; color: #991b1b;
+                 font-size: 14px; display: none; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="feed.html">● SocialApp</a>
+  <a href="feed.html">🏠 Home</a>
+  <a href="explore.html">🔍 Explore</a>
+  <a href="reels.html">🎬 Reels</a>
+  <a href="upload.html">➕ Upload</a>
+  <a href="chat.html">💬 Messages</a>
+  <a href="notifications.html">🔔</a>
+  <a href="profile.html">👤 Profile</a>
+  <button class="nav-logout" onclick="doLogout()">Logout</button>
+</nav>
+
+<div class="wrap">
+  <h2>Create Post</h2>
+  <div class="card">
+
+    <div>
+      <label class="lbl">Post Type</label>
+      <select id="post_type">
+        <option value="photo">📷 Photo</option>
+        <option value="video">🎥 Short Video</option>
+        <option value="reel">🎬 Reel (vertical)</option>
+        <option value="long_video">📹 Long Video</option>
+        <option value="audio">🎵 Audio / Song</option>
+        <option value="note">📝 Note (text only)</option>
+      </select>
+    </div>
+
+    <div id="file-section">
+      <label class="lbl">Choose File</label>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-inp').click()">
+        <div class="icon">📁</div>
+        <p>Click to browse or drag & drop</p>
+        <span>Photos: JPG, PNG, GIF &nbsp;|&nbsp; Videos: MP4, MOV &nbsp;|&nbsp; Audio: MP3, WAV</span>
+      </div>
+      <input type="file" id="file-inp" accept="image/*,video/*,audio/*">
+    </div>
+
+    <div id="preview"></div>
+
+    <div>
+      <label class="lbl">Caption</label>
+      <textarea id="caption" placeholder="Write a caption... use #hashtags"></textarea>
+    </div>
+
+    <div class="progress-bar" id="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <div class="success-msg" id="success-msg">✅ Posted successfully! Redirecting...</div>
+    <div class="error-msg" id="error-msg"></div>
+
+    <button class="btn-post" id="post-btn" onclick="doPost()">Post</button>
+
+  </div>
+</div>
+
+<script type="module">
+import { createPost } from '../js/api.js';
+
+if (!localStorage.getItem('access_token')) {
+  window.location.href = 'index.html';
+}
+
+const postTypeSelect = document.getElementById('post_type');
+const fileSection    = document.getElementById('file-section');
+const fileInp        = document.getElementById('file-inp');
+const preview        = document.getElementById('preview');
+const dropZone       = document.getElementById('drop-zone');
+
+// Hide file input for note type
+postTypeSelect.addEventListener('change', () => {
+  if (postTypeSelect.value === 'note') {
+    fileSection.style.display = 'none';
+    preview.style.display     = 'none';
+  } else {
+    fileSection.style.display = 'block';
+  }
+});
+
+// Preview selected file
+fileInp.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  showPreview(file);
+  dropZone.innerHTML = `<div class="icon">✅</div>
+    <p style="font-weight:600;color:#333">${file.name}</p>
+    <span>${(file.size / 1024 / 1024).toFixed(2)} MB — Click to change</span>`;
+});
+
+function showPreview(file) {
+  const url = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  if (file.type.startsWith('image/')) {
+    preview.innerHTML = `<img src="${url}" style="max-height:400px;width:100%;object-fit:contain">`;
+  } else if (file.type.startsWith('video/')) {
+    preview.innerHTML = `<video src="${url}" controls style="max-height:400px;width:100%"></video>`;
+  } else if (file.type.startsWith('audio/')) {
+    preview.innerHTML = `<div style="padding:20px;background:#f8f8f8">
+      <audio src="${url}" controls style="width:100%"></audio>
+    </div>`;
+  }
+}
+
+// Drag and drop
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) { fileInp.files = e.dataTransfer.files; showPreview(file); }
+});
+
+// Upload
+window.doPost = async () => {
+  const type    = postTypeSelect.value;
+  const caption = document.getElementById('caption').value.trim();
+  const file    = fileInp.files[0];
+
+  // Validation
+  if (type !== 'note' && !file) {
+    showError('Please select a file to upload.');
+    return;
+  }
+  if (!caption && type === 'note') {
+    showError('Please write something for your note.');
+    return;
+  }
+
+  const btn = document.getElementById('post-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Uploading...';
+
+  const formData = new FormData();
+  formData.append('post_type', type);
+  formData.append('caption',   caption);
+  if (file) {
+    // KEY: must be named exactly 'media_file' to match the Django field
+    formData.append('media_file', file, file.name);
+  }
+
+  // Show progress bar
+  document.getElementById('progress-bar').style.display = 'block';
+  let prog = 0;
+  const interval = setInterval(() => {
+    prog = Math.min(prog + 8, 85);
+    document.getElementById('progress-fill').style.width = prog + '%';
+  }, 200);
+
+  try {
+    const result = await createPost(formData);
+    clearInterval(interval);
+    document.getElementById('progress-fill').style.width = '100%';
+
+    if (result && result.id) {
+      document.getElementById('success-msg').style.display = 'block';
+      document.getElementById('error-msg').style.display   = 'none';
+      setTimeout(() => { window.location.href = 'feed.html'; }, 1500);
+    } else {
+      clearInterval(interval);
+      const errorText = result
+        ? JSON.stringify(result)
+        : 'Upload failed. Check your connection.';
+      showError(errorText);
+      btn.disabled    = false;
+      btn.textContent = 'Post';
+    }
+  } catch (err) {
+    clearInterval(interval);
+    showError('Upload failed: ' + err.message);
+    btn.disabled    = false;
+    btn.textContent = 'Post';
+  }
+};
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.style.display = 'block';
+  el.textContent   = '❌ ' + msg;
+  document.getElementById('progress-bar').style.display = 'none';
+}
+</script>
+</body>
+</html>
