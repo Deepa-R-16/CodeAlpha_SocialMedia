@@ -1,0 +1,10 @@
+Django
+gunicorn
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-decouple
+dj-database-url
+cloudinary
+django-cloudinary-storage
+psycopg2-binary
