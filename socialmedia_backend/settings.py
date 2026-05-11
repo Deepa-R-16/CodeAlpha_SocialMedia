@@ -119,4 +119,9 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    'https://joyful-conkies-784f2f.netlify.app',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+]
