@@ -1,5 +1,4 @@
-const BASE = 'http://127.0.0.1:8000/api';
-
+const BASE = 'https://socialmedia-backend-2t6a.onrender.com/api';
 async function apiCall(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('access_token');
     const headers = {};
