@@ -12,4 +12,6 @@ urlpatterns = [
     path('users/<int:user_id>/',       views.UserDetailView.as_view()),
     path('users/suggest/',             views.SuggestUsersView.as_view()),
     path('search/',                    views.SearchView.as_view()),
+    path('forgot-password/', views.ForgotPasswordView.as_view()),
+    path('reset-password/',  views.ResetPasswordView.as_view()),
 ]
