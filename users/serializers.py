@@ -25,7 +25,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url)
         return url
 
-
 class UserSerializer(serializers.ModelSerializer):
     profile  = ProfileSerializer(read_only=True)
     password = serializers.CharField(write_only=True, min_length=6)
@@ -34,6 +33,13 @@ class UserSerializer(serializers.ModelSerializer):
         model  = User
         fields = ['id', 'username', 'email', 'first_name',
                   'last_name', 'password', 'profile']
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'This email is already registered. Use a different email.'
+            )
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(

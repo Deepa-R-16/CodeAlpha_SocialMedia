@@ -136,24 +136,31 @@ class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
-        if not email:
-            return Response({'error': 'Email is required.'}, status=400)
+        username = request.data.get('username', '').strip()
+        email    = request.data.get('email', '').strip()
+
+        if not username or not email:
+            return Response(
+                {'error': 'Both username and email are required.'},
+                status=400
+            )
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(username=username, email=email)
         except User.DoesNotExist:
-            return Response({'message': 'If that email is registered, a reset link has been sent.'})
+            return Response(
+                {'error': 'No account found with that username and email combination.'},
+                status=400
+            )
 
+        # Generate a reset token
         token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://joyful-conkies-784f2f.netlify.app')
-        reset_link = f"{frontend_url}/pages/reset-password.html?uid={uid}&token={token}"
+        uid   = urlsafe_base64_encode(force_bytes(user.pk))
 
-        # Return reset link directly — no email needed
         return Response({
-            'message': 'Password reset link generated successfully.',
-            'reset_link': reset_link
+            'message': 'Identity verified. You can now reset your password.',
+            'uid':   uid,
+            'token': token,
         })
 
 
@@ -161,24 +168,27 @@ class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        uid      = request.data.get('uid', '')
-        token    = request.data.get('token', '')
-        password = request.data.get('password', '')
+        uid       = request.data.get('uid', '')
+        token     = request.data.get('token', '')
+        password  = request.data.get('password', '')
+        password2 = request.data.get('password2', '')
 
         if not uid or not token or not password:
             return Response({'error': 'All fields required.'}, status=400)
         if len(password) < 6:
             return Response({'error': 'Password must be at least 6 characters.'}, status=400)
+        if password != password2:
+            return Response({'error': 'Passwords do not match.'}, status=400)
 
         try:
             user_id = force_str(urlsafe_base64_decode(uid))
-            user = User.objects.get(pk=user_id)
+            user    = User.objects.get(pk=user_id)
         except (TypeError, ValueError, User.DoesNotExist):
-            return Response({'error': 'Invalid reset link.'}, status=400)
+            return Response({'error': 'Invalid request.'}, status=400)
 
         if not default_token_generator.check_token(user, token):
-            return Response({'error': 'Reset link has expired.'}, status=400)
+            return Response({'error': 'Session expired. Please start again.'}, status=400)
 
         user.set_password(password)
         user.save()
-        return Response({'message': 'Password updated successfully.'})
+        return Response({'message': 'Password reset successfully. You can now login.'})
